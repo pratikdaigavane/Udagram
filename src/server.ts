@@ -1,7 +1,6 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 import {filterImageFromURL} from './util/util';
-import validator from "validator";
 import fs from 'fs';
 
 const isImageUrl = require('is-image-url');
@@ -11,27 +10,28 @@ const isImageUrl = require('is-image-url');
     // Init the Express application
     const app = express();
 
-    // Set the network port
+    // Set the network port 
     const port = process.env.PORT || 8082;
 
     // Use the body parser middleware for post requests
     app.use(bodyParser.json());
-    app.get("/filteredimage", async (req, res) => {
-        let url = req.query.image_url || 'default'
+    app.get("/filteredimage", async (req:express.Request, res:express.Response) => {
+
+        let url:string = req.query.image_url || 'default'
 
         //checking if the url is valid
         if (await isImageUrl(url)) {
             //filtering the image
             filterImageFromURL(url)
                 .then((file) => {
-                    res.sendFile(file, () =>
+                    res.status(200).sendFile(file, () =>
                         //deleting the file
                         fs.unlinkSync(file)
                     );
                 })
-                .catch(() => res.send({'error': 'bad url'}))
+                .catch(() => res.status(500).send({'error': 'cannot process image'}))
         } else {
-            res.send({'error': 'bad url'})
+            res.status(400).send({'error': 'bad url'})
         }
     })
 
